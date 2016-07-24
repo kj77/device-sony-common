@@ -23,12 +23,12 @@ TARGET_NO_KERNEL := false
 BOARD_KERNEL_CMDLINE += user_debug=31 androidboot.selinux=permissive
 BOARD_KERNEL_CMDLINE += msm_rtb.filter=0x3F ehci-hcd.park=3
 BOARD_KERNEL_CMDLINE += dwc3.maximum_speed=high dwc3_msm.prop_chg_detect=Y
-BOARD_KERNEL_CMDLINE += coherent_pool=8M
+#BOARD_KERNEL_CMDLINE += coherent_pool=8M
 
 BOARD_KERNEL_BOOTIMG := true
-BOARD_CUSTOM_MKBOOTIMG := mkqcdtbootimg
+#BOARD_CUSTOM_MKBOOTIMG := mkqcdtbootimg
 BOARD_MKBOOTIMG_ARGS := --ramdisk_offset $(BOARD_RAMDISK_OFFSET) --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
-BOARD_MKBOOTIMG_ARGS += --dt_dir $(OUT)/dtbs
+#BOARD_MKBOOTIMG_ARGS += --dt_dir $(OUT)/dtbs
 
 TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
@@ -50,9 +50,9 @@ BOARD_USES_ALSA_AUDIO := true
 AUDIO_FEATURE_ENABLED_MULTI_VOICE_SESSIONS := true
 
 #Camera
-TARGET_USES_AOSP := true
+#TARGET_USES_AOSP := true
 BOARD_QTI_CAMERA_32BIT_ONLY := true
-BOARD_QTI_CAMERA_V2 := true
+#BOARD_QTI_CAMERA_V2 := true
 
 # GPS definitions for Qualcomm solution
 BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE := $(TARGET_BOARD_PLATFORM)

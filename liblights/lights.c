@@ -46,51 +46,28 @@ enum {
 
 static struct light_state_t g_led_shared[_LED_SHARED_CNT];
 
-enum led_ident {
-	LED_RED,
-	LED_GREEN,
-	LED_BLUE,
-	LED_BKLT_MDSS
-};
 
-static struct led_desc {
-	int max_brightness;
-	const char *max_brightness_s;
-	const char *brightness;
-	const char *blink;
-	const char *pwm;
-	const char *step;
-} led_descs[] = {
-	[LED_BKLT_MDSS] = {
-		.max_brightness = 0,
-		.max_brightness_s = "/sys/class/leds/lcd-backlight/max_brightness",
-		.brightness = "/sys/class/leds/lcd-backlight/brightness",
-	},
-	[LED_RED] = {
-		.max_brightness = 0,
-		.max_brightness_s = "/sys/class/leds/led:rgb_red/max_brightness",
-		.brightness = "/sys/class/leds/led:rgb_red/brightness",
-		.blink = "/sys/class/leds/led:rgb_red/blink",
-		.pwm = "/sys/class/leds/led:rgb_red/duty_pcts",
-		.step = "/sys/class/leds/led:rgb_red/ramp_step_ms",
-	},
-	[LED_GREEN] = {
-		.max_brightness = 0,
-		.max_brightness_s = "/sys/class/leds/led:rgb_green/max_brightness",
-		.brightness = "/sys/class/leds/led:rgb_green/brightness",
-		.blink = "/sys/class/leds/led:rgb_green/blink",
-		.pwm = "/sys/class/leds/led:rgb_green/duty_pcts",
-		.step = "/sys/class/leds/led:rgb_green/ramp_step_ms",
-	},
-	[LED_BLUE] = {
-		.max_brightness = 0,
-		.max_brightness_s = "/sys/class/leds/led:rgb_blue/max_brightness",
-		.brightness = "/sys/class/leds/led:rgb_blue/brightness",
-		.blink = "/sys/class/leds/led:rgb_blue/blink",
-		.pwm = "/sys/class/leds/led:rgb_blue/duty_pcts",
-		.step = "/sys/class/leds/led:rgb_blue/ramp_step_ms",
-	},
-};
+
+char const*const RED_LED_FILE
+		= "/sys/class/leds/led:rgb_red/brightness";
+
+char const*const GREEN_LED_FILE
+		= "/sys/class/leds/led:rgb_green/brightness";
+
+char const*const BLUE_LED_FILE
+		= "/sys/class/leds/led:rgb_blue/brightness";
+
+char const*const LCD_FILE
+		= "/sys/class/leds/lcd-backlight/brightness";
+
+char const*const RED_BLINK_FILE
+		= "/sys/class/leds/led:rgb_red/blink";
+
+char const*const GREEN_BLINK_FILE
+		= "/sys/class/leds/led:rgb_green/blink";
+
+char const*const BLUE_BLINK_FILE
+		= "/sys/class/leds/led:rgb_blue/blink";
 
 struct light {
 	char name[256];
@@ -197,68 +174,105 @@ static int write_string(const char *path, const char *value)
 	return 0;
 }
 
-static int write_int(const char *path, int value)
+static int
+is_lit(struct light_state_t const* state)
 {
-	char buffer[20];
-
-	snprintf(buffer, sizeof(buffer), "%d\n", value);
-	return write_string(path, buffer);
+	return state->color & 0x00ffffff;
 }
 
-static int read_int(const char *path)
+static int
+rgb_to_brightness(struct light_state_t const* state)
 {
-	static int already_warned = 0;
-	char buffer[12];
-	int fd, rc;
+	int color = state->color & 0x00ffffff;
+	return ((77 * ((color >> 16) & 0x00ff))
+			+ (150 * ((color >> 8) & 0x00ff)) + (29 * (color & 0x00ff))) >> 8;
+}
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0) {
-		if (already_warned == 0) {
-			ALOGE("read_int failed to open %s\n", path);
-			already_warned = 1;
-		}
+static int
+set_light_backlight(struct light_device_t* dev,
+		struct light_state_t const* state)
+{
+	int err = 0;
+	int brightness = rgb_to_brightness(state);
+
+	if(!dev) {
 		return -1;
 	}
 
-	rc = read(fd, buffer, sizeof(buffer) - 1);
-	close(fd);
-	if (rc <= 0)
-		return -1;
-
-	buffer[rc] = 0;
-
-	return strtol(buffer, 0, 0);
+	pthread_mutex_lock(&g_lcd_lock);
+	err = write_int(LCD_FILE, brightness);
+	pthread_mutex_unlock(&g_lcd_lock);
+	return err;
 }
 
-static void write_led_scaled(enum led_ident id, int brightness,
-		int pwm_pattern_index, unsigned int duration)
+static int
+set_speaker_light_locked(struct light_device_t* dev,
+		struct light_state_t const* state)
 {
-	int max_brightness = read_int(led_descs[id].max_brightness_s);
-	int scaled;
+	int red, green, blue;
+	int blink;
+	int onMS, offMS;
+	unsigned int colorRGB;
 
-	if (brightness > max_brightness)
-		scaled = max_brightness;
-	else
-		scaled = brightness;
+	if(!dev) {
+		return -1;
+	}
 
-	if (pwm_pattern_index >= 0 && led_descs[id].pwm) {
-		int i;
-		int pwm_pattern_values[PWM_PATTERN_LEN];
-		char pwm_pattern[256];
-		for (i = 0; i < PWM_PATTERN_LEN; i++) {
-			pwm_pattern_values[i] = (int)(pwm_patterns[pwm_pattern_index][i] * scaled);
-		}
+	switch (state->flashMode) {
+		case LIGHT_FLASH_TIMED:
+			onMS = state->flashOnMS;
+			offMS = state->flashOffMS;
+			break;
+		case LIGHT_FLASH_NONE:
+		default:
+			onMS = 0;
+			offMS = 0;
+			break;
+	}
 
-		sprintf(pwm_pattern, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
-			pwm_pattern_values[0], pwm_pattern_values[1], pwm_pattern_values[2], pwm_pattern_values[3],
-			pwm_pattern_values[4], pwm_pattern_values[5], pwm_pattern_values[6], pwm_pattern_values[7],
-			pwm_pattern_values[8], pwm_pattern_values[9], pwm_pattern_values[10], pwm_pattern_values[11],
-			pwm_pattern_values[12], pwm_pattern_values[13], pwm_pattern_values[14], pwm_pattern_values[15]);
-		write_string(led_descs[id].pwm, pwm_pattern);
-		write_int(led_descs[id].step, duration);
-		write_int(led_descs[id].blink, 1);
+	colorRGB = state->color;
+
+#if 0
+	ALOGD("set_speaker_light_locked mode %d, colorRGB=%08X, onMS=%d, offMS=%d\n",
+			state->flashMode, colorRGB, onMS, offMS);
+#endif
+
+	red = (colorRGB >> 16) & 0xFF;
+	green = (colorRGB >> 8) & 0xFF;
+	blue = colorRGB & 0xFF;
+
+	if (onMS > 0 && offMS > 0) {
+		/*
+		 * if ON time == OFF time
+		 *   use blink mode 2
+		 * else
+		 *   use blink mode 1
+		 */
+		if (onMS == offMS)
+			blink = 2;
+		else
+			blink = 1;
 	} else {
-		write_int(led_descs[id].brightness, scaled);
+		blink = 0;
+	}
+
+	if (blink) {
+		if (red) {
+			if (write_int(RED_BLINK_FILE, blink))
+				write_int(RED_LED_FILE, 0);
+	}
+		if (green) {
+			if (write_int(GREEN_BLINK_FILE, blink))
+				write_int(GREEN_LED_FILE, 0);
+	}
+		if (blue) {
+			if (write_int(BLUE_BLINK_FILE, blink))
+				write_int(BLUE_LED_FILE, 0);
+	}
+	} else {
+		write_int(RED_LED_FILE, red);
+		write_int(GREEN_LED_FILE, green);
+		write_int(BLUE_LED_FILE, blue);
 	}
 }
 

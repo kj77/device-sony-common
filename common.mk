@@ -48,6 +48,7 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/sony/common/rootdir/init.common.rc:root/init.common.rc \
     device/sony/common/rootdir/init.common.usb.rc:root/init.common.usb.rc
+
 # Common etc
 PRODUCT_COPY_FILES += \
     device/sony/common/rootdir/system/vendor/etc/audio_effects.conf:system/vendor/etc/audio_effects.conf \

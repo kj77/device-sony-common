@@ -221,7 +221,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.fluence.voicecall=true \
     persist.audio.fluence.voicecomm=true \
     persist.audio.fluence.voicerec=false \
-    persist.audio.fluence.speaker=true \
+    persist.audio.fluence.speaker=false \
     media.aac_51_output_enabled=true
 
 # Property to enable user to access Google WFD settings.

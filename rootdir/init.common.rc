@@ -14,6 +14,7 @@
 
 on early-init
     mount debugfs debugfs /sys/kernel/debug
+    chmod 666 /proc/cmdline
 
 on init
     # Enable subsystem restart
@@ -106,14 +107,14 @@ on post-fs-data
     # FM Radio
     mkdir /data/misc/fm 0770 system system
 
-    chown system /dev/block/bootdevice/by-name
+    chown system /dev/block/platform/msm_sdcc.1/by-name
 
     setprop vold.post_fs_data_done 1
 
 on charger
     # Booting modem
-    wait /dev/block/bootdevice/by-name/system
-    mount ext4 /dev/block/bootdevice/by-name/system /system ro barrier=1
+    wait /dev/block/platform/msm_sdcc.1/by-name/system
+    mount ext4 /dev/block/platform/msm_sdcc.1/by-name/system /system ro barrier=1
     start rmt_storage
     start mlog_qmi_service
     start irsc_util
@@ -233,7 +234,7 @@ on boot
 
 
 # SONY misc
-service tad_static /system/vendor/bin/tad_static /dev/block/bootdevice/by-name/TA 0,16
+service tad_static /system/vendor/bin/tad_static /dev/block/platform/msm_sdcc.1/by-name/TA 0,16
     class core
     user root
     group root

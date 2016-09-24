@@ -133,6 +133,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
    librmnetctl
 
+# Gello
+PRODUCT_PACKAGES += \
+    Gello
+
 # Charger
 PRODUCT_PACKAGES += \
     charger_res_images

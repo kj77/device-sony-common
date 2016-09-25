@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+PRODUCT_VENDOR_KERNEL_HEADERS := device/sony/common/kernel-headers
+
 TARGET_NO_RADIOIMAGE := true
 TARGET_NO_BOOTLOADER := true
 TARGET_NO_RECOVERY := false
@@ -22,7 +24,11 @@ BOARD_KERNEL_CMDLINE += user_debug=31 androidboot.selinux=permissive
 BOARD_KERNEL_CMDLINE += msm_rtb.filter=0x3F ehci-hcd.park=3
 BOARD_KERNEL_CMDLINE += dwc3.maximum_speed=high dwc3_msm.prop_chg_detect=Y
 #BOARD_KERNEL_CMDLINE += coherent_pool=8M
-#BOARD_KERNEL_CMDLINE += sched_enable_power_aware=1
+
+BOARD_KERNEL_BOOTIMG := true
+#BOARD_CUSTOM_MKBOOTIMG := mkqcdtbootimg
+BOARD_MKBOOTIMG_ARGS := --ramdisk_offset $(BOARD_RAMDISK_OFFSET) --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
+#BOARD_MKBOOTIMG_ARGS += --dt_dir $(OUT)/dtbs
 
 TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
@@ -30,12 +36,14 @@ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 # GFX
 USE_OPENGL_RENDERER := true
 TARGET_USES_ION := true
+TARGET_USES_OVERLAY := true
+TARGET_USES_SF_BYPASS := true
 TARGET_USES_C2D_COMPOSITION := true
 
 MAX_EGL_CACHE_KEY_SIZE := 12*1024
 MAX_EGL_CACHE_SIZE := 2048*1024
 OVERRIDE_RS_DRIVER := libRSDriver_adreno.so
-TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
+NUM_FRAMEBUFFER_SURFACE_BUFFERS := 3
 
 # Audio
 BOARD_USES_ALSA_AUDIO := true
@@ -67,11 +75,36 @@ ifeq ($(HOST_OS),linux)
 endif
 
 BUILD_KERNEL := true
--include device/sony/common-headers/KernelHeaders.mk
 -include device/sony/common-kernel/KernelConfig.mk
 
 # Include build helpers for QCOM proprietary
 -include vendor/qcom/proprietary/common/build/proprietary-build.mk
 
 # SELinux
-include device/sony/sepolicy/sepolicy.mk
+#include device/qcom/sepolicy/sepolicy.mk
+
+#BOARD_SEPOLICY_DIRS += device/sony/common/sepolicy
+
+#BOARD_SEPOLICY_UNION += \
+    addrsetup.te \
+    bluetooth.te \
+    device.te \
+    file.te \
+    installd.te \
+    tfa_amp.te \
+    property.te \
+    sct.te \
+    sensors.te \
+    service.te \
+    mediaserver.te \
+    mlog_qmi.te \
+    system_app.te \
+    tad.te \
+    ta_qmi.te \
+    thermanager.te \
+    timekeep.te \
+    wpa.te \
+    file_contexts \
+    genfs_contexts \
+    property_contexts \
+    service_contexts

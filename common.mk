@@ -14,15 +14,16 @@
 
 DEVICE_PACKAGE_OVERLAYS += device/sony/common/overlay
 
-# Common Specific Permissions
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:system/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:system/etc/permissions/android.hardware.camera.flash-autofocus.xml \
     frameworks/native/data/etc/android.hardware.camera.front.xml:system/etc/permissions/android.hardware.camera.front.xml \
     frameworks/native/data/etc/android.hardware.camera.full.xml:system/etc/permissions/android.hardware.camera.full.xml \
     frameworks/native/data/etc/android.hardware.camera.raw.xml:system/etc/permissions/android.hardware.camera.raw.xml \
+    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml \
     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
     frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
+    frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:system/etc/permissions/android.hardware.sensor.gyroscope.xml \
     frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
     frameworks/native/data/etc/android.hardware.sensor.compass.xml:system/etc/permissions/android.hardware.sensor.compass.xml \
     frameworks/native/data/etc/android.hardware.sensor.light.xml:system/etc/permissions/android.hardware.sensor.light.xml \
@@ -36,8 +37,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
     frameworks/native/data/etc/android.hardware.nfc.xml:system/etc/permissions/android.hardware.nfc.xml \
-    frameworks/native/data/etc/com.android.nfc_extras.xml:system/etc/permissions/com.android.nfc_extras.xml \
-    frameworks/native/data/etc/android.software.midi.xml:system/etc/permissions/android.software.midi.xml
+    frameworks/native/data/etc/com.android.nfc_extras.xml:system/etc/permissions/com.android.nfc_extras.xml
 
 PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
@@ -55,13 +55,8 @@ PRODUCT_COPY_FILES += \
     device/sony/common/rootdir/system/etc/gps.conf:system/etc/gps.conf \
     device/sony/common/rootdir/system/etc/nfcee_access.xml:system/etc/nfcee_access.xml \
     device/sony/common/rootdir/system/etc/sec_config:system/etc/sec_config \
-    device/sony/common/rootdir/system/etc/sensors/sensors_settings:system/etc/sensors/sensors_settings
-
-# QMI
-PRODUCT_COPY_FILES += \
-    device/sony/common/rootdir/system/etc/data/dsi_config.xml:system/etc/data/dsi_config.xml \
-    device/sony/common/rootdir/system/etc/data/netmgr_config.xml:system/etc/data/netmgr_config.xml \
-    device/sony/common/rootdir/system/etc/data/qmi_config.xml:system/etc/data/qmi_config.xml
+    device/sony/common/rootdir/system/etc/sensors/sensors_settings:system/etc/sensors/sensors_settings \
+    device/sony/common/rootdir/system/etc/init.qcom.ril.sh:system/etc/init.qcom.ril.sh
 
 # Audio
 PRODUCT_PACKAGES += \
@@ -103,6 +98,7 @@ PRODUCT_PACKAGES += \
 # GPS
 PRODUCT_PACKAGES += \
     libloc_api_v02 \
+    libloc_adapter \
     libloc_core \
     libloc_eng \
     libgps.utils
@@ -110,6 +106,7 @@ PRODUCT_PACKAGES += \
 # WLAN
 PRODUCT_PACKAGES += \
     p2p_supplicant.conf \
+    dhcpcd.conf \
     hostapd \
     libwpa_client \
     wpa_supplicant \
@@ -133,16 +130,13 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
    librmnetctl
 
-# Gello
-PRODUCT_PACKAGES += \
-    Gello
-
 # Charger
 PRODUCT_PACKAGES += \
     charger_res_images
 
 # AOSP Packages
 PRODUCT_PACKAGES += \
+    InCallUI \
     Launcher3
 
 PRODUCT_PACKAGES += \
@@ -152,13 +146,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libemoji
 
-# ExtendedSettings
-PRODUCT_PACKAGES += \
-    ExtendedSettings
-
 # APN list
 PRODUCT_COPY_FILES += \
-    device/sample/etc/old-apns-conf.xml:system/etc/old-apns-conf.xml \
     device/sample/etc/apns-full-conf.xml:system/etc/apns-conf.xml
 
 # Limit dex2oat threads to improve thermals
@@ -167,18 +156,15 @@ PRODUCT_PROPERTY_OVERRIDES += \
     dalvik.vm.image-dex2oat-threads=4
 
 # Platform specific default properties
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    persist.sys.usb.config=mtp
+
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.data.qmi.adb_logmask=0
 
-# configure adb over wifi only on the eng build
-ifneq (,$(filter eng, $(TARGET_BUILD_VARIANT)))
+# Black conceal color
 PRODUCT_PROPERTY_OVERRIDES += \
-    service.adb.tcp.port=5555
-endif
-
-# Enable MultiWindow
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.sys.debug.multi_window=true
+    persist.vidc.dec.conceal_color=32784
 
 # Default to LTE/GSM/WCDMA.
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -230,15 +216,13 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     vidc.debug.level=1
 
-# Audio
 # Fluencetype can be "fluence" or "fluencepro" or "none"
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.fluence.voicecall=true \
     persist.audio.fluence.voicecomm=true \
     persist.audio.fluence.voicerec=false \
-    persist.audio.fluence.speaker=false \
-    media.aac_51_output_enabled=true \
-    audio.deep_buffer.media=1
+    persist.audio.fluence.speaker=true \
+    media.aac_51_output_enabled=true
 
 # Property to enable user to access Google WFD settings.
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -262,9 +246,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Camera
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.camera.HAL3.enabled=0 \
-    persist.camera.gyro.disable=1 \
-    persist.camera.feature.cac=0 \
+    camera.disable_zsl_mode=0 \
+    persist.camera.HAL3.enabled=1 \
     persist.camera.ois.disable=0
 
 # Sensors debug

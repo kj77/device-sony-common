@@ -1,4 +1,4 @@
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2014 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
+# Include common
+include device/sony/common/common.mk
 
-include $(CLEAR_VARS)
+# Recovery keycheck
+PRODUCT_PACKAGES += \
+    keycheck
 
-LOCAL_SRC_FILES := lights.c
-LOCAL_SHARED_LIBRARIES := liblog
-LOCAL_MODULE := lights.$(TARGET_DEVICE)
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_RELATIVE_PATH := hw
-include $(BUILD_SHARED_LIBRARY)
+# SELinux
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.build.selinux=1
+
+# Omni custom config
+$(call inherit-product, vendor/omni/config/common.mk)

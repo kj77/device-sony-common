@@ -61,6 +61,7 @@ TARGET_NO_RPC := true
 
 # Charger
 BOARD_CHARGER_ENABLE_SUSPEND := true
+BACKLIGHT_PATH := /sys/class/leds/lcd-backlight/brightness
 
 # Include an expanded selection of fonts
 EXTENDED_FONT_FOOTPRINT := true

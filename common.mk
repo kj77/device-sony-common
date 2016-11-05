@@ -165,10 +165,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.vidc.dec.conceal_color=32784
 
-# Default to LTE/GSM/WCDMA.
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.telephony.default_network=9
-
 # System props for the data modules
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.use_data_netmgrd=true \
